@@ -144,52 +144,63 @@ export default function RentalPropertyWebsite() {
   };
 
   const openCloudinaryWidget = () => {
+    console.log('Cloudinary Cloud Name:', CLOUDINARY_CLOUD_NAME);
+    console.log('Cloudinary Upload Preset:', CLOUDINARY_UPLOAD_PRESET);
+    console.log('Window.cloudinary exists:', typeof window.cloudinary !== 'undefined');
+    
     if (!CLOUDINARY_CLOUD_NAME || !CLOUDINARY_UPLOAD_PRESET) {
-      alert('Cloudinary is niet correct geconfigureerd. Controleer de environment variables in Vercel.');
+      alert(`Cloudinary niet geconfigureerd!\nCloud Name: ${CLOUDINARY_CLOUD_NAME || 'ONTBREEKT'}\nUpload Preset: ${CLOUDINARY_UPLOAD_PRESET || 'ONTBREEKT'}\n\nVoeg environment variables toe in Vercel en redeploy.`);
       return;
     }
 
     if (typeof window.cloudinary === 'undefined') {
-      alert('Cloudinary widget is nog aan het laden. Wacht 5 seconden en probeer opnieuw.');
+      alert('Cloudinary widget is nog aan het laden. Wacht 10 seconden en probeer opnieuw.');
       return;
     }
 
     setUploading(true);
     
-    const widget = window.cloudinary.createUploadWidget(
-      {
-        cloudName: CLOUDINARY_CLOUD_NAME,
-        uploadPreset: CLOUDINARY_UPLOAD_PRESET,
-        sources: ['local', 'camera'],
-        multiple: false,
-        maxFiles: 1,
-        clientAllowedFormats: ['jpg', 'jpeg', 'png', 'webp'],
-        maxFileSize: 5000000,
-        folder: 'rental-property'
-      },
-      (error: any, result: any) => {
-        if (error) {
-          console.error('Upload error:', error);
-          alert('Upload mislukt: ' + (error.statusText || 'Onbekende fout'));
-          setUploading(false);
-          return;
+    try {
+      const widget = window.cloudinary.createUploadWidget(
+        {
+          cloudName: CLOUDINARY_CLOUD_NAME,
+          uploadPreset: CLOUDINARY_UPLOAD_PRESET,
+          sources: ['local', 'camera'],
+          multiple: false,
+          maxFiles: 1,
+          clientAllowedFormats: ['jpg', 'jpeg', 'png', 'webp'],
+          maxFileSize: 5000000,
+          folder: 'rental-property'
+        },
+        (error: any, result: any) => {
+          if (error) {
+            console.error('Upload error:', error);
+            alert('Upload mislukt: ' + (error.statusText || 'Onbekende fout'));
+            setUploading(false);
+            return;
+          }
+          
+          if (result.event === 'success') {
+            console.log('Upload success:', result.info);
+            const imageUrl = result.info.secure_url;
+            setEditData({
+              ...editData,
+              images: [...editData.images, { url: imageUrl, caption: 'Nieuwe foto' }]
+            });
+            setUploading(false);
+          } else if (result.event === 'close') {
+            setUploading(false);
+          }
         }
-        
-        if (result.event === 'success') {
-          console.log('Upload success:', result.info);
-          const imageUrl = result.info.secure_url;
-          setEditData({
-            ...editData,
-            images: [...editData.images, { url: imageUrl, caption: 'Nieuwe foto' }]
-          });
-          setUploading(false);
-        } else if (result.event === 'close') {
-          setUploading(false);
-        }
-      }
-    );
+      );
 
-    widget.open();
+      console.log('Opening widget...');
+      widget.open();
+    } catch (err) {
+      console.error('Widget creation error:', err);
+      alert('Fout bij openen widget: ' + err);
+      setUploading(false);
+    }
   };
 
   const openDocumentWidget = () => {

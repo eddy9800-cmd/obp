@@ -23,17 +23,13 @@ const defaultPropertyData = {
     "Gevelbreedte 4.90 m",
     "Oriëntatie tuin: Noord-Oost"
   ],
-  description: "Charmante halfopen woning nabij het hart van Deinze ✨
+  const woningBeschrijving = "✨ Charmante halfopen woning nabij het hart van Deinze ✨\n\n" +
+"Ontdek deze gezellige en lichtrijke woning, ideaal gelegen in een rustige buurt op wandelafstand van het bruisende centrum van Deinze. Hier geniet je van de perfecte balans tussen sereniteit en stadscomfort.\n\n" +
+"🛏️ 2 ruime slaapkamers met de mogelijkheid om de zolder eenvoudig om te vormen tot een derde kamer – ideaal voor een groeiend gezin of een thuiskantoor.\n" +
+"📐 115 m² bewoonbare oppervlakte op een perceel van 222 m², waardoor je zowel binnen als buiten alle ruimte hebt om te leven en te genieten.\n" +
+"🌿 Energiezuinig wonen dankzij dubbele beglazing en een degelijke isolatie, wat niet alleen comfort maar ook een lage energiefactuur garandeert.\n\n" +
+"Deze woning combineert charme, functionaliteit en toekomstmogelijkheden. Een unieke kans voor wie op zoek is naar een warme thuis in een aantrekkelijke omgeving.";
 
-Ontdek deze gezellige en lichtrijke woning, ideaal gelegen in een rustige buurt op wandelafstand van het bruisende centrum van Deinze. Hier geniet je van de perfecte balans tussen sereniteit en stadscomfort.
-
-🛏️ 2 ruime slaapkamers met de mogelijkheid om de zolder eenvoudig om te vormen tot een derde kamer – ideaal voor een groeiend gezin of een thuiskantoor.
-
-📐 115 m² bewoonbare oppervlakte op een perceel van 222 m², waardoor je zowel binnen als buiten alle ruimte hebt om te leven en te genieten.
-
-🌿 Energiezuinig wonen dankzij dubbele beglazing en een degelijke isolatie, wat niet alleen comfort maar ook een lage energiefactuur garandeert.
-
-Deze woning combineert charme, functionaliteit en toekomstmogelijkheden. Een unieke kans voor wie op zoek is naar een warme thuis in een aantrekkelijke omgeving.",
   phone: "0486/30.22.20",
   email: "eddy9800@gmail.com",
   mapUrl: "https://www.google.com/maps/place/Oude+Brugsepoort+59,+9800+Deinze/@50.98922,3.5205228,17z/data=!4m6!3m5!1s0x47c36b6560123b8d:0x8d461276b5c0a363!8m2!3d50.9893531!4d3.5205152!16s%2Fg%2F11csdgq__j?entry=ttu&g_ep=EgoyMDI1MTIwMi4wIKXMDSoASAFQAw%3D%3D",

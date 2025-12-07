@@ -5,7 +5,7 @@ import { Bed, Bath, Maximize, MapPin, Phone, Mail, Building2, X, Upload, Edit2, 
 
 const defaultPropertyData = {
   address: "Oude Brugsepoort 59, 9800 Deinze, Oost-Vlaanderen, België",
-  monthlyRent: "€ 950",
+  monthlyRent: "€ 695",
   bedrooms: 2,
   bathrooms: 1,
   livingArea: 115,

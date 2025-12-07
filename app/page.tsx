@@ -1,11 +1,33 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Bed, Bath, Maximize, MapPin, Phone, Mail, Building2, X, Upload, Edit2, Save, LogOut, LogIn } from 'lucide-react';
+import { Bed, Bath, Maximize, MapPin, Phone, Mail, Building2, X, Upload, Edit2, Save, LogOut, LogIn, ChevronLeft, ChevronRight, ArrowUp, ArrowDown } from 'lucide-react';
 
-const defaultPropertyData = {
+interface PropertyImage {
+  url: string;
+  caption: string;
+}
+
+interface PropertyData {
+  address: string;
+  monthlyRent: string;
+  bedrooms: number;
+  bathrooms: number;
+  livingArea: number;
+  totalArea: number;
+  availableFrom: string;
+  propertyType: string;
+  features: string[];
+  description: string;
+  phone: string;
+  email: string;
+  mapUrl: string;
+  images: PropertyImage[];
+}
+
+const defaultPropertyData: PropertyData = {
   address: "Oude Brugsepoort 59, 9800 Deinze, Oost-Vlaanderen, België",
-  monthlyRent: "€ 695",
+  monthlyRent: "€ 950",
   bedrooms: 2,
   bathrooms: 1,
   livingArea: 115,
@@ -23,16 +45,15 @@ const defaultPropertyData = {
     "Gevelbreedte 4.90 m",
     "Oriëntatie tuin: Noord-Oost"
   ],
-  description: "Charmante halfopen woning gelegen in een rustige buurt op wandelafstand van het centrum van Deinze. De woning beschikt over 2 ruime slaapkamers met de mogelijkheid om de zolder om te bouwen tot een derde slaapkamer. Met een bewoonbare oppervlakte van 115 m² en een totale oppervlakte van 222 m² biedt deze woning alle comfort die u nodig heeft. De woning is voorzien van dubbele beglazing en is goed geïsoleerd, wat zorgt voor een laag energieverbruik.",
-
+  description: "✨ Charmante halfopen woning nabij het hart van Deinze ✨\n\nOntdek deze gezellige en lichtrijke woning, ideaal gelegen in een rustige buurt op wandelafstand van het bruisende centrum van Deinze. Hier geniet je van de perfecte balans tussen sereniteit en stadscomfort.\n\n🛏️ 2 ruime slaapkamers met de mogelijkheid om de zolder eenvoudig om te vormen tot een derde kamer – ideaal voor een groeiend gezin of een thuiskantoor.\n\n📐 115 m² bewoonbare oppervlakte op een perceel van 222 m², waardoor je zowel binnen als buiten alle ruimte hebt om te leven en te genieten.\n\n🌿 Energiezuinig wonen dankzij dubbele beglazing en een degelijke isolatie, wat niet alleen comfort maar ook een lage energiefactuur garandeert.\n\nDeze woning combineert charme, functionaliteit en toekomstmogelijkheden. Een unieke kans voor wie op zoek is naar een warme thuis in een aantrekkelijke omgeving.",
   phone: "0486/30.22.20",
   email: "eddy9800@gmail.com",
   mapUrl: "https://www.google.com/maps/place/Oude+Brugsepoort+59,+9800+Deinze/@50.98922,3.5205228,17z/data=!4m6!3m5!1s0x47c36b6560123b8d:0x8d461276b5c0a363!8m2!3d50.9893531!4d3.5205152!16s%2Fg%2F11csdgq__j?entry=ttu&g_ep=EgoyMDI1MTIwMi4wIKXMDSoASAFQAw%3D%3D",
   images: [
-    "https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=800",
-    "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800",
-    "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=800",
-    "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800"
+    { url: "https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=800", caption: "Voorgevel" },
+    { url: "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800", caption: "Woonkamer" },
+    { url: "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=800", caption: "Keuken" },
+    { url: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800", caption: "Slaapkamer" }
   ]
 };
 
@@ -47,23 +68,30 @@ declare global {
 }
 
 export default function RentalPropertyWebsite() {
-  const [propertyData, setPropertyData] = useState(defaultPropertyData);
+  const [propertyData, setPropertyData] = useState<PropertyData>(defaultPropertyData);
   const [isAdmin, setIsAdmin] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
   const [password, setPassword] = useState('');
   const [editMode, setEditMode] = useState(false);
-  const [editData, setEditData] = useState(defaultPropertyData);
-  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [editData, setEditData] = useState<PropertyData>(defaultPropertyData);
+  const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null);
   const [newFeature, setNewFeature] = useState('');
   const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     const saved = localStorage.getItem('propertyData');
     if (saved) {
-      setPropertyData(JSON.parse(saved));
+      const parsedData = JSON.parse(saved);
+      // Migrate old format to new format with captions
+      if (parsedData.images && parsedData.images.length > 0 && typeof parsedData.images[0] === 'string') {
+        parsedData.images = parsedData.images.map((url: string, index: number) => ({
+          url,
+          caption: `Foto ${index + 1}`
+        }));
+      }
+      setPropertyData(parsedData);
     }
 
-    // Load Cloudinary widget script
     const script = document.createElement('script');
     script.src = 'https://upload-widget.cloudinary.com/global/all.js';
     script.async = true;
@@ -121,7 +149,7 @@ export default function RentalPropertyWebsite() {
         multiple: false,
         maxFiles: 1,
         clientAllowedFormats: ['jpg', 'jpeg', 'png', 'webp'],
-        maxFileSize: 5000000, // 5MB
+        maxFileSize: 5000000,
         folder: 'rental-property'
       },
       (error: any, result: any) => {
@@ -136,7 +164,7 @@ export default function RentalPropertyWebsite() {
           const imageUrl = result.info.secure_url;
           setEditData({
             ...editData,
-            images: [...editData.images, imageUrl]
+            images: [...editData.images, { url: imageUrl, caption: 'Nieuwe foto' }]
           });
         }
       }
@@ -150,6 +178,26 @@ export default function RentalPropertyWebsite() {
       ...editData,
       images: editData.images.filter((_, i) => i !== index)
     });
+  };
+
+  const moveImageUp = (index: number) => {
+    if (index === 0) return;
+    const newImages = [...editData.images];
+    [newImages[index - 1], newImages[index]] = [newImages[index], newImages[index - 1]];
+    setEditData({ ...editData, images: newImages });
+  };
+
+  const moveImageDown = (index: number) => {
+    if (index === editData.images.length - 1) return;
+    const newImages = [...editData.images];
+    [newImages[index], newImages[index + 1]] = [newImages[index + 1], newImages[index]];
+    setEditData({ ...editData, images: newImages });
+  };
+
+  const updateImageCaption = (index: number, caption: string) => {
+    const newImages = [...editData.images];
+    newImages[index] = { ...newImages[index], caption };
+    setEditData({ ...editData, images: newImages });
   };
 
   const addFeature = () => {
@@ -167,6 +215,26 @@ export default function RentalPropertyWebsite() {
       ...editData,
       features: editData.features.filter((_, i) => i !== index)
     });
+  };
+
+  const openImageViewer = (index: number) => {
+    setSelectedImageIndex(index);
+  };
+
+  const closeImageViewer = () => {
+    setSelectedImageIndex(null);
+  };
+
+  const goToPrevImage = () => {
+    if (selectedImageIndex !== null && selectedImageIndex > 0) {
+      setSelectedImageIndex(selectedImageIndex - 1);
+    }
+  };
+
+  const goToNextImage = () => {
+    if (selectedImageIndex !== null && selectedImageIndex < propertyData.images.length - 1) {
+      setSelectedImageIndex(selectedImageIndex + 1);
+    }
   };
 
   if (showLogin) {
@@ -249,8 +317,8 @@ export default function RentalPropertyWebsite() {
               <textarea
                 value={editData.description}
                 onChange={(e) => setEditData({ ...editData, description: e.target.value })}
-                rows={6}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                rows={12}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg font-mono text-sm"
               />
             </div>
 
@@ -309,17 +377,42 @@ export default function RentalPropertyWebsite() {
             </div>
 
             <div>
-              <label className="block text-sm font-semibold mb-2">Foto&apos;s</label>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+              <label className="block text-sm font-semibold mb-2">Foto&apos;s (eerste foto = hoofdfoto homepage)</label>
+              <div className="space-y-3 mb-4">
                 {editData.images.map((img, index) => (
-                  <div key={index} className="relative group">
-                    <img src={img} alt={`Foto ${index + 1}`} className="w-full h-32 object-cover rounded-lg" />
-                    <button
-                      onClick={() => removeImage(index)}
-                      className="absolute top-2 right-2 bg-red-600 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition"
-                    >
-                      <X size={16} />
-                    </button>
+                  <div key={index} className="flex items-start gap-3 bg-gray-50 p-3 rounded-lg">
+                    <img src={img.url} alt={img.caption} className="w-24 h-24 object-cover rounded" />
+                    <div className="flex-1">
+                      <input
+                        type="text"
+                        value={img.caption}
+                        onChange={(e) => updateImageCaption(index, e.target.value)}
+                        placeholder="Onderschrift (bv. Badkamer, Slaapkamer 1)"
+                        className="w-full px-3 py-2 border border-gray-300 rounded mb-2"
+                      />
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => moveImageUp(index)}
+                          disabled={index === 0}
+                          className="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-1"
+                        >
+                          <ArrowUp size={16} /> Omhoog
+                        </button>
+                        <button
+                          onClick={() => moveImageDown(index)}
+                          disabled={index === editData.images.length - 1}
+                          className="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-1"
+                        >
+                          <ArrowDown size={16} /> Omlaag
+                        </button>
+                        <button
+                          onClick={() => removeImage(index)}
+                          className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 inline-flex items-center gap-1"
+                        >
+                          <X size={16} /> Verwijder
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -330,9 +423,6 @@ export default function RentalPropertyWebsite() {
               >
                 <Upload size={18} /> {uploading ? 'Uploaden...' : 'Foto Uploaden'}
               </button>
-              <p className="text-sm text-gray-500 mt-2">
-                Foto&apos;s worden opgeslagen in Cloudinary en zijn permanent zichtbaar voor iedereen.
-              </p>
             </div>
           </div>
         </div>
@@ -370,8 +460,8 @@ export default function RentalPropertyWebsite() {
 
       <div className="relative h-[500px] bg-gray-900">
         <img
-          src={propertyData.images[0]}
-          alt="Hoofdfoto woning"
+          src={propertyData.images[0]?.url}
+          alt={propertyData.images[0]?.caption || "Hoofdfoto woning"}
           className="w-full h-full object-cover opacity-80"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex items-end">
@@ -433,7 +523,7 @@ export default function RentalPropertyWebsite() {
 
         <div className="bg-white rounded-lg shadow-lg p-8 mb-8">
           <h3 className="text-2xl font-bold mb-4 text-gray-800">Beschrijving</h3>
-          <p className="text-gray-700 leading-relaxed">{propertyData.description}</p>
+          <div className="text-gray-700 leading-relaxed whitespace-pre-line">{propertyData.description}</div>
         </div>
 
         <div className="bg-white rounded-lg shadow-lg p-8 mb-8">
@@ -452,13 +542,18 @@ export default function RentalPropertyWebsite() {
           <h3 className="text-2xl font-bold mb-6 text-gray-800">Foto&apos;s</h3>
           <div className="grid md:grid-cols-2 gap-4">
             {propertyData.images.map((img, index) => (
-              <img
-                key={index}
-                src={img}
-                alt={`Foto ${index + 1}`}
-                className="w-full h-64 object-cover rounded-lg cursor-pointer hover:opacity-90 transition"
-                onClick={() => setSelectedImage(img)}
-              />
+              <div key={index} className="relative group cursor-pointer" onClick={() => openImageViewer(index)}>
+                <img
+                  src={img.url}
+                  alt={img.caption}
+                  className="w-full h-64 object-cover rounded-lg hover:opacity-90 transition"
+                />
+                {img.caption && (
+                  <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-white px-4 py-2 rounded-b-lg">
+                    <p className="text-sm font-medium">{img.caption}</p>
+                  </div>
+                )}
+              </div>
             ))}
           </div>
         </div>
@@ -504,22 +599,57 @@ export default function RentalPropertyWebsite() {
         </div>
       </div>
 
-      {selectedImage && (
+      {selectedImageIndex !== null && (
         <div
-          className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4"
-          onClick={() => setSelectedImage(null)}
+          className="fixed inset-0 bg-black/95 z-50 flex items-center justify-center p-4"
+          onClick={closeImageViewer}
         >
           <button
-            className="absolute top-4 right-4 text-white bg-black/50 p-2 rounded-full hover:bg-black/70"
-            onClick={() => setSelectedImage(null)}
+            className="absolute top-4 right-4 text-white bg-black/50 p-2 rounded-full hover:bg-black/70 z-10"
+            onClick={closeImageViewer}
           >
             <X size={24} />
           </button>
-          <img
-            src={selectedImage}
-            alt="Vergrote foto"
-            className="max-w-full max-h-full object-contain"
-          />
+
+          {selectedImageIndex > 0 && (
+            <button
+              className="absolute left-4 text-white bg-black/50 p-3 rounded-full hover:bg-black/70 z-10"
+              onClick={(e) => {
+                e.stopPropagation();
+                goToPrevImage();
+              }}
+            >
+              <ChevronLeft size={32} />
+            </button>
+          )}
+
+          {selectedImageIndex < propertyData.images.length - 1 && (
+            <button
+              className="absolute right-4 text-white bg-black/50 p-3 rounded-full hover:bg-black/70 z-10"
+              onClick={(e) => {
+                e.stopPropagation();
+                goToNextImage();
+              }}
+            >
+              <ChevronRight size={32} />
+            </button>
+          )}
+
+          <div className="max-w-7xl max-h-full flex flex-col items-center" onClick={(e) => e.stopPropagation()}>
+            <img
+              src={propertyData.images[selectedImageIndex].url}
+              alt={propertyData.images[selectedImageIndex].caption}
+              className="max-w-full max-h-[85vh] object-contain"
+            />
+            {propertyData.images[selectedImageIndex].caption && (
+              <div className="mt-4 bg-black/70 text-white px-6 py-3 rounded-lg">
+                <p className="text-lg font-medium">{propertyData.images[selectedImageIndex].caption}</p>
+                <p className="text-sm text-gray-300 mt-1">
+                  {selectedImageIndex + 1} / {propertyData.images.length}
+                </p>
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>

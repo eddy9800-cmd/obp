@@ -23,12 +23,7 @@ const defaultPropertyData = {
     "Gevelbreedte 4.90 m",
     "Oriëntatie tuin: Noord-Oost"
   ],
-  const woningBeschrijving = "✨ Charmante halfopen woning nabij het hart van Deinze ✨\n\n" +
-"Ontdek deze gezellige en lichtrijke woning, ideaal gelegen in een rustige buurt op wandelafstand van het bruisende centrum van Deinze. Hier geniet je van de perfecte balans tussen sereniteit en stadscomfort.\n\n" +
-"🛏️ 2 ruime slaapkamers met de mogelijkheid om de zolder eenvoudig om te vormen tot een derde kamer – ideaal voor een groeiend gezin of een thuiskantoor.\n" +
-"📐 115 m² bewoonbare oppervlakte op een perceel van 222 m², waardoor je zowel binnen als buiten alle ruimte hebt om te leven en te genieten.\n" +
-"🌿 Energiezuinig wonen dankzij dubbele beglazing en een degelijke isolatie, wat niet alleen comfort maar ook een lage energiefactuur garandeert.\n\n" +
-"Deze woning combineert charme, functionaliteit en toekomstmogelijkheden. Een unieke kans voor wie op zoek is naar een warme thuis in een aantrekkelijke omgeving.";
+  description: "Charmante halfopen woning gelegen in een rustige buurt op wandelafstand van het centrum van Deinze. De woning beschikt over 2 ruime slaapkamers met de mogelijkheid om de zolder om te bouwen tot een derde slaapkamer. Met een bewoonbare oppervlakte van 115 m² en een totale oppervlakte van 222 m² biedt deze woning alle comfort die u nodig heeft. De woning is voorzien van dubbele beglazing en is goed geïsoleerd, wat zorgt voor een laag energieverbruik.",
 
   phone: "0486/30.22.20",
   email: "eddy9800@gmail.com",

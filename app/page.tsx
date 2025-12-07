@@ -36,6 +36,14 @@ const defaultPropertyData = {
 };
 
 const ADMIN_PASSWORD = "77wx58L#iBnp";
+const CLOUDINARY_CLOUD_NAME = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || '';
+const CLOUDINARY_UPLOAD_PRESET = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || '';
+
+declare global {
+  interface Window {
+    cloudinary: any;
+  }
+}
 
 export default function RentalPropertyWebsite() {
   const [propertyData, setPropertyData] = useState(defaultPropertyData);
@@ -46,12 +54,23 @@ export default function RentalPropertyWebsite() {
   const [editData, setEditData] = useState(defaultPropertyData);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [newFeature, setNewFeature] = useState('');
+  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     const saved = localStorage.getItem('propertyData');
     if (saved) {
       setPropertyData(JSON.parse(saved));
     }
+
+    // Load Cloudinary widget script
+    const script = document.createElement('script');
+    script.src = 'https://upload-widget.cloudinary.com/global/all.js';
+    script.async = true;
+    document.body.appendChild(script);
+
+    return () => {
+      document.body.removeChild(script);
+    };
   }, []);
 
   const handleLogin = () => {
@@ -80,18 +99,49 @@ export default function RentalPropertyWebsite() {
     setEditMode(false);
   };
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setEditData({
-          ...editData,
-          images: [...editData.images, reader.result as string]
-        });
-      };
-      reader.readAsDataURL(file);
+  const openCloudinaryWidget = () => {
+    if (!CLOUDINARY_CLOUD_NAME || !CLOUDINARY_UPLOAD_PRESET) {
+      alert('Cloudinary is niet correct geconfigureerd. Voeg de environment variables toe in Vercel.');
+      return;
     }
+
+    if (typeof window.cloudinary === 'undefined') {
+      alert('Cloudinary widget is nog aan het laden. Probeer het opnieuw.');
+      return;
+    }
+
+    setUploading(true);
+    
+    const widget = window.cloudinary.createUploadWidget(
+      {
+        cloudName: CLOUDINARY_CLOUD_NAME,
+        uploadPreset: CLOUDINARY_UPLOAD_PRESET,
+        sources: ['local', 'camera'],
+        multiple: false,
+        maxFiles: 1,
+        clientAllowedFormats: ['jpg', 'jpeg', 'png', 'webp'],
+        maxFileSize: 5000000, // 5MB
+        folder: 'rental-property'
+      },
+      (error: any, result: any) => {
+        setUploading(false);
+        if (error) {
+          console.error('Upload error:', error);
+          alert('Upload mislukt. Probeer het opnieuw.');
+          return;
+        }
+        
+        if (result.event === 'success') {
+          const imageUrl = result.info.secure_url;
+          setEditData({
+            ...editData,
+            images: [...editData.images, imageUrl]
+          });
+        }
+      }
+    );
+
+    widget.open();
   };
 
   const removeImage = (index: number) => {
@@ -272,15 +322,16 @@ export default function RentalPropertyWebsite() {
                   </div>
                 ))}
               </div>
-              <label className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 cursor-pointer inline-flex items-center gap-2">
-                <Upload size={18} /> Foto Uploaden
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageUpload}
-                  className="hidden"
-                />
-              </label>
+              <button
+                onClick={openCloudinaryWidget}
+                disabled={uploading}
+                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 cursor-pointer inline-flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <Upload size={18} /> {uploading ? 'Uploaden...' : 'Foto Uploaden'}
+              </button>
+              <p className="text-sm text-gray-500 mt-2">
+                Foto&apos;s worden opgeslagen in Cloudinary en zijn permanent zichtbaar voor iedereen.
+              </p>
             </div>
           </div>
         </div>

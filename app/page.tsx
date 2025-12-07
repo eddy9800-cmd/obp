@@ -104,13 +104,16 @@ export default function RentalPropertyWebsite() {
       setPropertyData(parsedData);
     }
 
+    // Load Cloudinary widget script
     const script = document.createElement('script');
     script.src = 'https://upload-widget.cloudinary.com/global/all.js';
     script.async = true;
     document.body.appendChild(script);
 
     return () => {
-      document.body.removeChild(script);
+      if (document.body.contains(script)) {
+        document.body.removeChild(script);
+      }
     };
   }, []);
 
@@ -142,12 +145,12 @@ export default function RentalPropertyWebsite() {
 
   const openCloudinaryWidget = () => {
     if (!CLOUDINARY_CLOUD_NAME || !CLOUDINARY_UPLOAD_PRESET) {
-      alert('Cloudinary is niet correct geconfigureerd. Voeg de environment variables toe in Vercel.');
+      alert('Cloudinary is niet correct geconfigureerd. Controleer de environment variables in Vercel.');
       return;
     }
 
     if (typeof window.cloudinary === 'undefined') {
-      alert('Cloudinary widget is nog aan het laden. Probeer het opnieuw.');
+      alert('Cloudinary widget is nog aan het laden. Wacht 5 seconden en probeer opnieuw.');
       return;
     }
 
@@ -165,19 +168,23 @@ export default function RentalPropertyWebsite() {
         folder: 'rental-property'
       },
       (error: any, result: any) => {
-        setUploading(false);
         if (error) {
           console.error('Upload error:', error);
-          alert('Upload mislukt. Probeer het opnieuw.');
+          alert('Upload mislukt: ' + (error.statusText || 'Onbekende fout'));
+          setUploading(false);
           return;
         }
         
         if (result.event === 'success') {
+          console.log('Upload success:', result.info);
           const imageUrl = result.info.secure_url;
           setEditData({
             ...editData,
             images: [...editData.images, { url: imageUrl, caption: 'Nieuwe foto' }]
           });
+          setUploading(false);
+        } else if (result.event === 'close') {
+          setUploading(false);
         }
       }
     );

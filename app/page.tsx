@@ -506,7 +506,10 @@ export default function RentalPropertyWebsite() {
                 ))}
               </div>
               <button
-                onClick={openCloudinaryWidget}
+                onClick={() => {
+                  console.log('FOTO UPLOAD BUTTON CLICKED!');
+                  openCloudinaryWidget();
+                }}
                 disabled={uploading}
                 className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 cursor-pointer inline-flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
@@ -544,7 +547,10 @@ export default function RentalPropertyWebsite() {
                 ))}
               </div>
               <button
-                onClick={openDocumentWidget}
+                onClick={() => {
+                  console.log('PDF UPLOAD BUTTON CLICKED!');
+                  openDocumentWidget();
+                }}
                 disabled={uploadingDoc}
                 className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 cursor-pointer inline-flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >

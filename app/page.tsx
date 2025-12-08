@@ -547,10 +547,7 @@ export default function RentalPropertyWebsite() {
                 ))}
               </div>
               <button
-                onClick={() => {
-                  console.log('PDF UPLOAD BUTTON CLICKED!');
-                  openDocumentWidget();
-                }}
+                onClick={openDocumentWidget}
                 disabled={uploadingDoc}
                 className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 cursor-pointer inline-flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >

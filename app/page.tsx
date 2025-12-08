@@ -67,6 +67,7 @@ const defaultPropertyData: PropertyData = {
 const ADMIN_PASSWORD = "77wx58L#iBnp";
 const CLOUDINARY_CLOUD_NAME = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || '';
 const CLOUDINARY_UPLOAD_PRESET = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || '';
+const CLOUDINARY_DOCUMENTS_PRESET = process.env.NEXT_PUBLIC_CLOUDINARY_DOCUMENTS_PRESET || CLOUDINARY_UPLOAD_PRESET;
 
 declare global {
   interface Window {
@@ -204,49 +205,64 @@ export default function RentalPropertyWebsite() {
   };
 
   const openDocumentWidget = () => {
-    if (!CLOUDINARY_CLOUD_NAME || !CLOUDINARY_UPLOAD_PRESET) {
-      alert('Cloudinary is niet correct geconfigureerd. Voeg de environment variables toe in Vercel.');
+    console.log('Cloudinary Cloud Name:', CLOUDINARY_CLOUD_NAME);
+    console.log('Cloudinary Documents Preset:', CLOUDINARY_DOCUMENTS_PRESET);
+    
+    if (!CLOUDINARY_CLOUD_NAME || !CLOUDINARY_DOCUMENTS_PRESET) {
+      alert(`Cloudinary documenten niet geconfigureerd!\nCloud Name: ${CLOUDINARY_CLOUD_NAME || 'ONTBREEKT'}\nDocuments Preset: ${CLOUDINARY_DOCUMENTS_PRESET || 'ONTBREEKT'}`);
       return;
     }
 
     if (typeof window.cloudinary === 'undefined') {
-      alert('Cloudinary widget is nog aan het laden. Probeer het opnieuw.');
+      alert('Cloudinary widget is nog aan het laden. Wacht 10 seconden en probeer opnieuw.');
       return;
     }
 
     setUploadingDoc(true);
     
-    const widget = window.cloudinary.createUploadWidget(
-      {
-        cloudName: CLOUDINARY_CLOUD_NAME,
-        uploadPreset: CLOUDINARY_UPLOAD_PRESET,
-        sources: ['local'],
-        multiple: false,
-        maxFiles: 1,
-        clientAllowedFormats: ['pdf'],
-        maxFileSize: 10000000,
-        folder: 'rental-property/documents'
-      },
-      (error: any, result: any) => {
-        setUploadingDoc(false);
-        if (error) {
-          console.error('Upload error:', error);
-          alert('Upload mislukt. Probeer het opnieuw.');
-          return;
+    try {
+      const widget = window.cloudinary.createUploadWidget(
+        {
+          cloudName: CLOUDINARY_CLOUD_NAME,
+          uploadPreset: CLOUDINARY_DOCUMENTS_PRESET,
+          sources: ['local'],
+          multiple: false,
+          maxFiles: 1,
+          clientAllowedFormats: ['pdf'],
+          maxFileSize: 10000000,
+          folder: 'rental-property/documents',
+          resourceType: 'raw'
+        },
+        (error: any, result: any) => {
+          if (error) {
+            console.error('Upload error:', error);
+            alert('Upload mislukt: ' + (error.statusText || 'Onbekende fout'));
+            setUploadingDoc(false);
+            return;
+          }
+          
+          if (result.event === 'success') {
+            console.log('Document upload success:', result.info);
+            const docUrl = result.info.secure_url;
+            const docName = result.info.original_filename || 'Document';
+            setEditData({
+              ...editData,
+              documents: [...editData.documents, { url: docUrl, name: docName }]
+            });
+            setUploadingDoc(false);
+          } else if (result.event === 'close') {
+            setUploadingDoc(false);
+          }
         }
-        
-        if (result.event === 'success') {
-          const docUrl = result.info.secure_url;
-          const docName = result.info.original_filename || 'Document';
-          setEditData({
-            ...editData,
-            documents: [...editData.documents, { url: docUrl, name: docName }]
-          });
-        }
-      }
-    );
+      );
 
-    widget.open();
+      console.log('Opening document widget...');
+      widget.open();
+    } catch (err) {
+      console.error('Widget creation error:', err);
+      alert('Fout bij openen widget: ' + err);
+      setUploadingDoc(false);
+    }
   };
 
   const removeImage = (index: number) => {

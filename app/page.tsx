@@ -8,11 +8,6 @@ interface PropertyImage {
   caption: string;
 }
 
-interface PropertyDocument {
-  url: string;
-  name: string;
-}
-
 interface PropertyData {
   address: string;
   monthlyRent: string;
@@ -28,7 +23,6 @@ interface PropertyData {
   email: string;
   mapUrl: string;
   images: PropertyImage[];
-  documents: PropertyDocument[];
 }
 
 const defaultPropertyData: PropertyData = {
@@ -60,8 +54,7 @@ const defaultPropertyData: PropertyData = {
     { url: "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800", caption: "Woonkamer" },
     { url: "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=800", caption: "Keuken" },
     { url: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800", caption: "Slaapkamer" }
-  ],
-  documents: []
+  ]
 };
 
 const ADMIN_PASSWORD = "77wx58L#iBnp";
@@ -84,7 +77,6 @@ export default function RentalPropertyWebsite() {
   const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null);
   const [newFeature, setNewFeature] = useState('');
   const [uploading, setUploading] = useState(false);
-  const [uploadingDoc, setUploadingDoc] = useState(false);
 
   useEffect(() => {
     const saved = localStorage.getItem('propertyData');
@@ -97,23 +89,16 @@ export default function RentalPropertyWebsite() {
           caption: `Foto ${index + 1}`
         }));
       }
-      // Ensure documents array exists
-      if (!parsedData.documents) {
-        parsedData.documents = [];
-      }
       setPropertyData(parsedData);
     }
 
-    // Load Cloudinary widget script
     const script = document.createElement('script');
     script.src = 'https://upload-widget.cloudinary.com/global/all.js';
     script.async = true;
     document.body.appendChild(script);
 
     return () => {
-      if (document.body.contains(script)) {
-        document.body.removeChild(script);
-      }
+      document.body.removeChild(script);
     };
   }, []);
 
@@ -144,66 +129,6 @@ export default function RentalPropertyWebsite() {
   };
 
   const openCloudinaryWidget = () => {
-    console.log('Cloudinary Cloud Name:', CLOUDINARY_CLOUD_NAME);
-    console.log('Cloudinary Upload Preset:', CLOUDINARY_UPLOAD_PRESET);
-    console.log('Window.cloudinary exists:', typeof window.cloudinary !== 'undefined');
-    
-    if (!CLOUDINARY_CLOUD_NAME || !CLOUDINARY_UPLOAD_PRESET) {
-      alert(`Cloudinary niet geconfigureerd!\nCloud Name: ${CLOUDINARY_CLOUD_NAME || 'ONTBREEKT'}\nUpload Preset: ${CLOUDINARY_UPLOAD_PRESET || 'ONTBREEKT'}\n\nVoeg environment variables toe in Vercel en redeploy.`);
-      return;
-    }
-
-    if (typeof window.cloudinary === 'undefined') {
-      alert('Cloudinary widget is nog aan het laden. Wacht 10 seconden en probeer opnieuw.');
-      return;
-    }
-
-    setUploading(true);
-    
-    try {
-      const widget = window.cloudinary.createUploadWidget(
-        {
-          cloudName: CLOUDINARY_CLOUD_NAME,
-          uploadPreset: CLOUDINARY_UPLOAD_PRESET,
-          sources: ['local', 'camera'],
-          multiple: false,
-          maxFiles: 1,
-          clientAllowedFormats: ['jpg', 'jpeg', 'png', 'webp'],
-          maxFileSize: 5000000,
-          folder: 'rental-property'
-        },
-        (error: any, result: any) => {
-          if (error) {
-            console.error('Upload error:', error);
-            alert('Upload mislukt: ' + (error.statusText || 'Onbekende fout'));
-            setUploading(false);
-            return;
-          }
-          
-          if (result.event === 'success') {
-            console.log('Upload success:', result.info);
-            const imageUrl = result.info.secure_url;
-            setEditData({
-              ...editData,
-              images: [...editData.images, { url: imageUrl, caption: 'Nieuwe foto' }]
-            });
-            setUploading(false);
-          } else if (result.event === 'close') {
-            setUploading(false);
-          }
-        }
-      );
-
-      console.log('Opening widget...');
-      widget.open();
-    } catch (err) {
-      console.error('Widget creation error:', err);
-      alert('Fout bij openen widget: ' + err);
-      setUploading(false);
-    }
-  };
-
-  const openDocumentWidget = () => {
     if (!CLOUDINARY_CLOUD_NAME || !CLOUDINARY_UPLOAD_PRESET) {
       alert('Cloudinary is niet correct geconfigureerd. Voeg de environment variables toe in Vercel.');
       return;
@@ -214,21 +139,21 @@ export default function RentalPropertyWebsite() {
       return;
     }
 
-    setUploadingDoc(true);
+    setUploading(true);
     
     const widget = window.cloudinary.createUploadWidget(
       {
         cloudName: CLOUDINARY_CLOUD_NAME,
         uploadPreset: CLOUDINARY_UPLOAD_PRESET,
-        sources: ['local'],
+        sources: ['local', 'camera'],
         multiple: false,
         maxFiles: 1,
-        clientAllowedFormats: ['pdf'],
-        maxFileSize: 10000000,
-        folder: 'rental-property/documents'
+        clientAllowedFormats: ['jpg', 'jpeg', 'png', 'webp'],
+        maxFileSize: 5000000,
+        folder: 'rental-property'
       },
       (error: any, result: any) => {
-        setUploadingDoc(false);
+        setUploading(false);
         if (error) {
           console.error('Upload error:', error);
           alert('Upload mislukt. Probeer het opnieuw.');
@@ -236,11 +161,10 @@ export default function RentalPropertyWebsite() {
         }
         
         if (result.event === 'success') {
-          const docUrl = result.info.secure_url;
-          const docName = result.info.original_filename || 'Document';
+          const imageUrl = result.info.secure_url;
           setEditData({
             ...editData,
-            documents: [...editData.documents, { url: docUrl, name: docName }]
+            images: [...editData.images, { url: imageUrl, caption: 'Nieuwe foto' }]
           });
         }
       }
@@ -291,19 +215,6 @@ export default function RentalPropertyWebsite() {
       ...editData,
       features: editData.features.filter((_, i) => i !== index)
     });
-  };
-
-  const removeDocument = (index: number) => {
-    setEditData({
-      ...editData,
-      documents: editData.documents.filter((_, i) => i !== index)
-    });
-  };
-
-  const updateDocumentName = (index: number, name: string) => {
-    const newDocs = [...editData.documents];
-    newDocs[index] = { ...newDocs[index], name };
-    setEditData({ ...editData, documents: newDocs });
   };
 
   const openImageViewer = (index: number) => {
@@ -506,59 +417,12 @@ export default function RentalPropertyWebsite() {
                 ))}
               </div>
               <button
-                onClick={() => {
-                  console.log('FOTO UPLOAD BUTTON CLICKED!');
-                  openCloudinaryWidget();
-                }}
+                onClick={openCloudinaryWidget}
                 disabled={uploading}
                 className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 cursor-pointer inline-flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Upload size={18} /> {uploading ? 'Uploaden...' : 'Foto Uploaden'}
               </button>
-            </div>
-
-            <div>
-              <label className="block text-sm font-semibold mb-2">Documenten (PDFs)</label>
-              <div className="space-y-2 mb-3">
-                {editData.documents.map((doc, index) => (
-                  <div key={index} className="flex items-center gap-2 bg-gray-50 p-3 rounded">
-                    <input
-                      type="text"
-                      value={doc.name}
-                      onChange={(e) => updateDocumentName(index, e.target.value)}
-                      placeholder="Document naam"
-                      className="flex-1 px-3 py-2 border border-gray-300 rounded"
-                    />
-                    <a 
-                      href={doc.url} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="px-3 py-2 bg-gray-200 rounded hover:bg-gray-300 text-sm"
-                    >
-                      Bekijk
-                    </a>
-                    <button
-                      onClick={() => removeDocument(index)}
-                      className="text-red-600 hover:text-red-800"
-                    >
-                      <X size={18} />
-                    </button>
-                  </div>
-                ))}
-              </div>
-              <button
-                onClick={() => {
-                  console.log('PDF UPLOAD BUTTON CLICKED!');
-                  openDocumentWidget();
-                }}
-                disabled={uploadingDoc}
-                className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 cursor-pointer inline-flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <Upload size={18} /> {uploadingDoc ? 'Uploaden...' : 'PDF Uploaden'}
-              </button>
-              <p className="text-sm text-gray-500 mt-2">
-                Upload documenten zoals energiecertificaat, grondplan, huurcontract, etc.
-              </p>
             </div>
           </div>
         </div>
@@ -693,34 +557,6 @@ export default function RentalPropertyWebsite() {
             ))}
           </div>
         </div>
-
-        {propertyData.documents && propertyData.documents.length > 0 && (
-          <div className="bg-white rounded-lg shadow-lg p-8 mb-8">
-            <h3 className="text-2xl font-bold mb-6 text-gray-800">Documenten</h3>
-            <div className="space-y-3">
-              {propertyData.documents.map((doc, index) => (
-                <a
-                  key={index}
-                  href={doc.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition group"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
-                      <span className="text-red-600 font-bold text-sm">PDF</span>
-                    </div>
-                    <div>
-                      <p className="font-semibold text-gray-800 group-hover:text-blue-600">{doc.name}</p>
-                      <p className="text-sm text-gray-500">Klik om te openen</p>
-                    </div>
-                  </div>
-                  <ChevronRight className="text-gray-400 group-hover:text-blue-600" size={24} />
-                </a>
-              ))}
-            </div>
-          </div>
-        )}
 
         <div className="bg-white rounded-lg shadow-lg p-8 mb-8">
           <h3 className="text-2xl font-bold mb-6 text-gray-800">Locatie</h3>
